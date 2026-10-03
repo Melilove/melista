@@ -3,10 +3,9 @@
   "short_name": "Melista",
   "description": "Lista de compras para súper y farmacia, con avisos de reposición y resumen mensual. Diseñado por Melitalove®.",
   "lang": "es-CL",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/melista/",
+  "scope": "/melista/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#EEE8FC",
   "theme_color": "#5B2BB5",
   "categories": [
@@ -32,13 +31,7 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
-  "id": "./"
+  "id": "/melista/"
 }
