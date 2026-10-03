@@ -1,15 +1,15 @@
 // Melista — service worker (funciona sin conexión)
-const VERSION = "melista-v1.0.0";
+const VERSION = "melista-v1.0.1";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/icon.svg",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png",
-  "./icons/favicon-32.png"
+  "./icon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-maskable-512.png",
+  "./apple-touch-icon.png",
+  "./favicon-32.png"
 ];
 
 self.addEventListener("install", e => {

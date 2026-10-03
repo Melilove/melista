@@ -40,16 +40,16 @@ Todos los datos se guardan **solo en el dispositivo** (almacenamiento local del 
 index.html             App completa (HTML, CSS y JS)
 manifest.webmanifest   Datos de instalación de la PWA
 sw.js                  Service worker para uso sin conexión
-icons/                 Íconos de la app
+icon-*.png, icon.svg    Íconos de la app
 ```
 
 ## Actualizar la app
 
-Al publicar cambios, sube el número en `const VERSION` dentro de `sw.js` (por ejemplo `melista-v1.0.1`) y en `VERSION` dentro de `index.html`. Así los teléfonos descargan la versión nueva.
+Al publicar cambios, sube el número en `const VERSION` dentro de `sw.js` (por ejemplo `melista-v1.0.2`) y en `VERSION` dentro de `index.html`. Así los teléfonos descargan la versión nueva.
 
 ## Versión
 
-1.0.0
+1.0.1
 
 ---
 
