@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Melista</title>
+<meta name="description" content="Melista: tu lista de compras para súper y farmacia, con avisos de reposición y resumen mensual.">
+<meta name="theme-color" content="#5B2BB5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Melista">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1EDFA; --grad:linear-gradient(165deg,#EEE8FC 0%,#E6F1FA 50%,#DDF5F1 100%); --bar:rgba(236,244,248,.82); --paper:#FFFFFF; --ink:#2E1460; --soft:#6E5A99; --line:#DDD3EE;
+  --mark:#F6D77A; --done:#A99BC4; --btn:#5B2BB5; --btn-ink:#FFFFFF; --ok:#12A894; --mg:#E3218C; --ce:#4FC3F7; --tq:#14C6B0;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1A1030; --grad:linear-gradient(165deg,#1C1236 0%,#16203A 60%,#0F2A2E 100%); --bar:rgba(22,20,44,.85); --paper:#261A42; --ink:#F1ECFA; --soft:#B3A6D1; --line:#3E2F63;
+    --mark:#8A6A12; --done:#6E6290; --btn:#9B6BFF; --btn-ink:#1A1030; --ok:#14C6B0; --mg:#FF4DA6; --ce:#6FD0FA; --tq:#2FE0C8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1A1030; --grad:linear-gradient(165deg,#1C1236 0%,#16203A 60%,#0F2A2E 100%); --bar:rgba(22,20,44,.85); --paper:#261A42; --ink:#F1ECFA; --soft:#B3A6D1; --line:#3E2F63;
+    --mark:#8A6A12; --done:#6E6290; --btn:#9B6BFF; --btn-ink:#1A1030; --ok:#14C6B0; --mg:#FF4DA6; --ce:#6FD0FA; --tq:#2FE0C8;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);background-image:var(--grad);background-attachment:fixed;color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-tap-highlight-color:transparent}
+.wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:16px 14px 190px}
+/* Siluetas animadas de fondo */
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bgfx svg{position:absolute;bottom:-80px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+  animation:drift linear infinite;will-change:transform}
+@keyframes drift{from{transform:translateY(0) rotate(var(--r0))}to{transform:translateY(calc(-100vh - 160px)) rotate(var(--r1))}}
+
+/* Marca */
+.brand{display:flex;align-items:center;gap:10px;margin:2px 4px 12px}
+.brand svg{width:40px;height:40px;flex:none}
+.brand b{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--btn)}
+/* Pestañas */
+.tabs{display:flex;gap:6px;margin:4px 2px 14px}
+.tab{flex:1;border:0;background:transparent;color:var(--soft);font-family:inherit;font-weight:600;font-size:15px;line-height:1;
+  padding:11px 0;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+.tab .n{display:inline-block;min-width:20px;margin-left:6px;padding:3px 6px;border-radius:999px;background:var(--mg);color:#fff;font-size:12px;font-weight:700;line-height:1;vertical-align:2px}
+.tab .n:empty{display:none}
+
+/* Ticket */
+.ticket{background:var(--paper);padding:22px 20px 34px;position:relative;
+  -webkit-mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 50% 100%/18px 100% repeat-x;
+          mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 50% 100%/18px 100% repeat-x;}
+.head{text-align:center;padding-bottom:14px;border-bottom:2px dashed var(--line);margin-bottom:8px}
+.head h1{font-family:"Courier Prime",ui-monospace,monospace;font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:.02em}
+.head p{font-family:"Courier Prime",ui-monospace,monospace;margin:0;color:var(--soft);font-size:14px}
+
+ul{list-style:none;margin:0;padding:0}
+.item{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px dotted var(--line);
+  font-family:"Courier Prime",ui-monospace,monospace;font-size:18px;line-height:1.35}
+.item:last-child{border-bottom:0}
+.check{flex:none;width:26px;height:26px;border:2px solid var(--ink);border-radius:6px;background:transparent;
+  cursor:pointer;display:grid;place-items:center;padding:0;color:var(--paper)}
+.item.done .check{background:var(--ok);border-color:var(--ok)}
+.check svg{width:16px;height:16px;opacity:0}
+.item.done .check svg{opacity:1}
+.txt{flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer}
+.item.done .txt{color:var(--done);text-decoration:line-through;text-decoration-thickness:2px}
+.item.fresh .txt{background:linear-gradient(transparent 55%,var(--mark) 55%);transition:background .9s}
+.del{flex:none;border:0;background:transparent;color:var(--soft);font-size:22px;line-height:1;width:34px;height:34px;
+  border-radius:8px;cursor:pointer}
+.del:hover{background:var(--bg)}
+.sub{font-family:"Courier Prime",ui-monospace,monospace;color:var(--soft);font-size:14px;
+  display:flex;justify-content:space-between;align-items:center;margin:18px 0 2px;padding-top:12px;border-top:2px dashed var(--line)}
+.sub button{border:0;background:transparent;color:var(--ink);font:inherit;text-decoration:underline;cursor:pointer;padding:6px 0}
+.empty{font-family:"Courier Prime",ui-monospace,monospace;color:var(--soft);text-align:center;padding:26px 8px 10px;font-size:15px;line-height:1.5}
+
+.group{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:13px;font-weight:600;color:var(--soft);margin:14px 2px 0}
+.group:first-child{margin-top:4px}
+.spark i{background:var(--btn)!important}
+.tag{flex:none;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:12px;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+
+/* Categorías en la barra */
+.cats{display:flex;gap:6px;margin-bottom:8px}
+.cat{border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:7px 14px;
+  font-family:inherit;font-size:14px;line-height:1;cursor:pointer}
+.cat[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* Registro */
+.filters{display:flex;gap:6px;justify-content:center;margin:0 0 6px}
+.stat{padding:13px 2px;border-bottom:1px dotted var(--line)}
+.stat:last-child{border-bottom:0}
+.stat-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:"Courier Prime",ui-monospace,monospace;font-size:18px}
+.stat-top b{font-size:20px;white-space:nowrap}
+.stat-meta{font-size:13.5px;color:var(--soft);margin-top:3px}
+.spark{display:flex;gap:3px;align-items:flex-end;height:26px;margin-top:8px}
+.spark i{flex:1;background:var(--ink);opacity:.85;border-radius:2px 2px 0 0;min-height:2px}
+.spark i.zero{opacity:.15}
+.spark-l{display:flex;gap:3px;font-size:10.5px;color:var(--soft);margin-top:2px}
+.spark-l span{flex:1;text-align:center}
+.note{font-size:13px;color:var(--soft);text-align:center;margin:14px 6px 0;line-height:1.45}
+body.reg .bar{display:none}
+body.reg .wrap{padding-bottom:40px}
+
+/* Resumen mensual */
+.monthnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.monthnav button{width:44px;height:44px;border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;font-size:20px;cursor:pointer}
+.monthnav button:disabled{opacity:.3;cursor:default}
+.monthnav h1{margin:0;font-family:"Courier Prime",ui-monospace,monospace;font-size:21px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 4px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px 6px;text-align:center}
+.kpi b{display:block;font-size:24px;line-height:1.1;color:var(--btn)}
+.kpi span{font-size:12.5px;color:var(--soft)}
+.cmp{font-size:13.5px;color:var(--soft);text-align:center;margin:8px 0 0}
+.mlist{font-family:"Courier Prime",ui-monospace,monospace;font-size:16.5px}
+.mlist li{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px dotted var(--line)}
+.mlist li:last-child{border-bottom:0}
+.mlist li span:last-child{white-space:nowrap;color:var(--soft)}
+.share{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;background:var(--btn);color:var(--btn-ink);
+  font-family:inherit;font-weight:600;font-size:16px;padding:14px;cursor:pointer}
+.sec{font-size:15px;font-weight:700;margin:22px 4px 10px;color:var(--ink)}
+.foot{text-align:center;font-size:12.5px;color:var(--soft);margin-top:6px;line-height:1.6}
+.foot b{color:var(--btn);font-weight:700}
+
+/* Se está acabando */
+.due{margin:18px 0 0;background:var(--paper);border-radius:16px;padding:14px 14px 16px;border-left:5px solid var(--mg)}
+.due h2{font-size:15px;font-weight:700;margin:0 0 4px;color:var(--ink)}
+.due p{font-size:13px;color:var(--soft);margin:0 0 10px}
+.due .chip{border-color:var(--mg)}
+.due .chip small{color:var(--soft);font-size:12.5px;margin-left:4px}
+/* Precio */
+.price{flex:none;width:92px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;
+  padding:7px 8px;font-family:"Courier Prime",ui-monospace,monospace;font-size:15px;text-align:right}
+.price::placeholder{color:var(--soft)}
+.spend{font-size:14px;text-align:center;margin:10px 0 0;color:var(--ink)}
+.spend b{color:var(--btn)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper);border-radius:14px;padding:14px 16px;margin-top:18px;font-size:15px}
+.toggle small{display:block;color:var(--soft);font-size:12.5px;margin-top:2px}
+.toggle input{width:22px;height:22px;accent-color:var(--btn);flex:none}
+/* Voz */
+.mic{flex:none;width:54px;border:2px solid var(--btn);border-radius:14px;background:transparent;color:var(--btn);cursor:pointer;display:grid;place-items:center}
+.mic svg{width:24px;height:24px}
+.mic.on{background:var(--mg);border-color:var(--mg);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.6}}
+
+/* Frecuentes */
+.freq{margin:22px 2px 0}
+.freq h2{font-size:14px;font-weight:600;color:var(--soft);margin:0 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;
+  padding:8px 13px;font-family:inherit;font-size:15px;line-height:1;cursor:pointer}
+.chip:active{background:var(--mark)}
+
+/* Barra de ingreso */
+.bar{position:fixed;z-index:2;left:0;right:0;bottom:0;background:var(--bar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:480px;margin:0 auto}
+.sugg{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.sugg:empty{display:none}
+.sugg .chip{white-space:nowrap;background:var(--paper);border-color:transparent}
+.row{display:flex;gap:8px}
+.row input{flex:1;min-width:0;border:2px solid var(--ink);background:var(--paper);color:var(--ink);
+  border-radius:14px;padding:14px 14px;font-family:inherit;font-size:17px;line-height:1.2}
+.row input::placeholder{color:var(--soft)}
+.add{flex:none;width:54px;border:0;border-radius:14px;background:var(--btn);color:var(--btn-ink);font-size:28px;cursor:pointer}
+.hint{font-size:12.5px;color:var(--soft);margin:7px 2px 0}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+/* Aviso deshacer */
+.toast{z-index:3;position:fixed;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  bottom:calc(140px + env(safe-area-inset-bottom,0px));background:var(--btn);color:var(--btn-ink);
+  border-radius:12px;padding:10px 10px 10px 16px;display:flex;gap:14px;align-items:center;font-size:15px;transition:.2s;max-width:92vw}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:#F6D77A;color:#2E1460;font-family:inherit;font-weight:600;font-size:14px;line-height:1;border-radius:8px;padding:8px 12px;cursor:pointer}
+.sync{font-size:12px;color:var(--soft);text-align:center;margin-top:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}#bgfx svg{animation:none;display:none}}
+</style>
+</head>
+<body>
+<div id="bgfx" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF0B3"/><stop offset=".45" stop-color="#E9B949"/><stop offset=".7" stop-color="#C98F1E"/><stop offset="1" stop-color="#FFE38A"/></linearGradient></defs>
+      <rect width="100" height="100" rx="22" fill="#5B2BB5"/>
+      <path d="M30 40 C19 33 14 27 14 21 A7 7 0 0 1 30 18" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <path d="M22 30 L30 38 L44 18" fill="none" stroke="url(#lg)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M54 28 H84" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="28" cy="58" r="7" fill="#4FC3F7"/><path d="M44 58 H78" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="28" cy="78" r="7" fill="#14C6B0"/><path d="M44 78 H72" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    </svg>
+    <b>Melista</b>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="compras" aria-selected="true">Comprar<span class="n" id="n-compras" title="Productos por comprar"></span></button>
+    <button class="tab" role="tab" data-tab="recordar" aria-selected="false">Recordar<span class="n" id="n-recordar" title="Recordatorios pendientes"></span></button>
+    <button class="tab" role="tab" data-tab="registro" aria-selected="false">Registro</button>
+  </div>
+
+  <section class="ticket" id="listView" aria-live="polite">
+    <div class="head">
+      <h1 id="title">Lista de compras</h1>
+      <p id="date"></p>
+    </div>
+    <ul id="pending"></ul>
+    <div id="emptyMsg" class="empty" hidden></div>
+    <div class="sub" id="doneHead" hidden>
+      <span id="doneLabel">En el carro</span>
+      <button id="clearDone" type="button">Vaciar marcados</button>
+    </div>
+    <ul id="done"></ul>
+  </section>
+
+  <div id="regWrap" hidden>
+  <section class="ticket" id="monthView" aria-live="polite">
+    <div class="head" style="padding-bottom:12px">
+      <div class="monthnav">
+        <button type="button" id="mPrev" aria-label="Mes anterior">‹</button>
+        <h1 id="mTitle"></h1>
+        <button type="button" id="mNext" aria-label="Mes siguiente">›</button>
+      </div>
+      <p>Resumen del mes</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b id="kTotal">0</b><span>compras</span></div>
+      <div class="kpi"><b id="kSuper">0</b><span>súper</span></div>
+      <div class="kpi"><b id="kFarm">0</b><span>farmacia</span></div>
+    </div>
+    <p class="cmp" id="mCmp"></p>
+    <p class="spend" id="mSpend" hidden></p>
+    <div class="sub" id="mProdHead"><span>Productos del mes</span><span id="mDistinct"></span></div>
+    <ul class="mlist" id="mProds"></ul>
+    <div class="sub" id="mNotesHead"><span>Recordatorios cumplidos</span><span id="mNotesN"></span></div>
+    <ul class="mlist" id="mNotes"></ul>
+    <div class="empty" id="mEmpty" hidden>Sin registros este mes.</div>
+    <button class="share" type="button" id="mShare">Compartir resumen</button>
+  </section>
+
+  <h2 class="sec">Por producto</h2>
+  <section class="ticket" id="regView">
+    <div class="head">
+      <h1>Frecuencia de compra</h1>
+      <p id="regSub"></p>
+    </div>
+    <div class="filters" id="filters">
+      <button class="cat" type="button" data-f="todo" aria-pressed="true">Todo</button>
+      <button class="cat" type="button" data-f="super" aria-pressed="false">Súper</button>
+      <button class="cat" type="button" data-f="farmacia" aria-pressed="false">Farmacia</button>
+    </div>
+    <ul id="stats"></ul>
+    <div id="regEmpty" class="empty" hidden>Todavía no hay compras registradas. Cada producto que marcas en la lista de compras queda anotado aquí con su fecha.</div>
+  </section>
+  <p class="note" id="regNote">El promedio cuenta los meses desde la primera vez que registraste ese producto.</p>
+  <div class="toggle"><span>Respaldo de tus datos<small>Descarga una copia o restaura una anterior</small></span>
+    <span style="display:flex;gap:6px;flex:none"><button type="button" class="cat" id="bkOut">Descargar</button><button type="button" class="cat" id="bkIn">Restaurar</button></span></div>
+  <input type="file" id="bkFile" accept="application/json,.json" hidden>
+  <label class="toggle"><span>Anotar precios<small>Opcional: aparece una casilla de precio en lo que marcas en el carro</small></span><input type="checkbox" id="pricesOn"></label>
+  </div>
+
+  <div class="due" id="due" hidden>
+    <h2>¿Se te está acabando?</h2>
+    <p>Según cada cuánto los compras, ya podrías necesitar:</p>
+    <div class="chips" id="dueChips"></div>
+  </div>
+
+  <div class="freq" id="freq" hidden>
+    <h2>Lo que sueles comprar</h2>
+    <div class="chips" id="freqChips"></div>
+  </div>
+  <p class="sync" id="sync"></p>
+  <p class="foot">Diseñado por <b>Melitalove®</b><br>Melista · versión <span id="ver"></span></p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="sugg" id="sugg"></div>
+    <div class="cats" id="cats">
+      <button class="cat" type="button" data-cat="super" aria-pressed="true">Súper</button>
+      <button class="cat" type="button" data-cat="farmacia" aria-pressed="false">Farmacia</button>
+    </div>
+    <form class="row" id="form" autocomplete="off">
+      <input id="input" type="text" enterkeyhint="done" aria-label="Agregar a la lista" placeholder="Agregar producto…">
+      <button class="mic" type="button" id="mic" aria-label="Dictar por voz" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="add" type="submit" aria-label="Agregar">+</button>
+    </form>
+    <p class="hint" id="hint">Separa con comas para agregar varios: pan, huevos, café</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" type="button">Deshacer</button></div>
+
+<script>
+(function(){
+  const LS = "note-meli-v1";
+  const VERSION = "1.0.0";
+  const fresh = () => ({ lists:{compras:[], recordar:[]}, history:{}, purchases:[], notesDone:[], settings:{prices:false}, updatedAt:0 });
+  let monthOff = 0;
+  const CATS = { super:"Súper", farmacia:"Farmacia" };
+  let cat = "super", filter = "todo";
+  let state = fresh();
+  let tab = "compras";
+  let lastAdded = new Set();
+  let undoData = null, toastTimer = null;
+
+  // ---- almacenamiento local (rápido, funciona sin conexión) ----
+  try { const raw = localStorage.getItem(LS); if (raw) state = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
+  function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(state)); } catch(e){} }
+
+  function setSync(t){ document.getElementById("sync").textContent = t; }
+  setSync("Tus datos se guardan solo en este dispositivo");
+
+  function commit(){ state.updatedAt = Date.now(); saveLocal(); render(); }
+
+  // ---- utilidades ----
+  const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  const norm = s => s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const list = () => state.lists[tab];
+
+  // ---- acciones ----
+  function addItems(text, forceCat){
+    const parts = text.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    lastAdded = new Set();
+    for (const p of parts){
+      const exists = list().find(i => norm(i.text) === norm(p));
+      if (exists){ if (exists.done){ exists.done = false; delete exists.pid; } lastAdded.add(exists.id); continue; }
+      const k = norm(p), known = state.history[k];
+      const c = (tab === "compras") ? (forceCat || (known && known.cat) || cat) : undefined;
+      const it = { id:uid(), text:cap(p), done:false, t:Date.now() };
+      if (c) it.cat = c;
+      list().push(it); lastAdded.add(it.id);
+      if (tab === "compras"){ state.history[k] = { text:(known && known.text) || cap(p), c:((known||{}).c||0)+1, cat:c }; }
+    }
+    commit();
+    setTimeout(()=>{ lastAdded = new Set(); document.querySelectorAll(".item.fresh").forEach(e=>e.classList.remove("fresh")); }, 1200);
+  }
+  function toggle(id){
+    const it = list().find(i=>i.id===id); if (!it) return;
+    it.done = !it.done;
+    const logKey = tab === "compras" ? "purchases" : "notesDone";
+    if (!state[logKey]) state[logKey] = [];
+    if (it.done){
+      const pid = uid(); it.pid = pid;
+      const rec = { id:pid, k:norm(it.text), text:it.text, d:Date.now() };
+      if (tab === "compras") rec.cat = it.cat || "super";
+      state[logKey].push(rec);
+    } else if (it.pid){
+      state[logKey] = state[logKey].filter(p => p.id !== it.pid); delete it.pid;
+    }
+    commit();
+  }
+  function remove(id){
+    const arr = list(), idx = arr.findIndex(i=>i.id===id);
+    if (idx < 0) return;
+    const [it] = arr.splice(idx,1);
+    undoData = { tab, items:[{it, idx}] };
+    commit(); showToast("Eliminado: " + it.text, true);
+  }
+  function clearDone(){
+    const arr = list(), removed = [];
+    for (let i = arr.length-1; i >= 0; i--) if (arr[i].done) removed.unshift({it:arr.splice(i,1)[0], idx:i});
+    if (!removed.length) return;
+    undoData = { tab, items:removed };
+    commit(); showToast(removed.length === 1 ? "1 producto quitado" : removed.length + " quitados", true);
+  }
+  function undo(){
+    if (!undoData) return;
+    const arr = state.lists[undoData.tab];
+    undoData.items.forEach(({it, idx}) => arr.splice(Math.min(idx, arr.length), 0, it));
+    undoData = null; hideToast(); commit();
+  }
+  function showToast(msg, canUndo){
+    document.getElementById("toastMsg").textContent = msg;
+    document.getElementById("undo").hidden = !canUndo;
+    document.getElementById("toast").classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 5000);
+  }
+  function hideToast(){ document.getElementById("toast").classList.remove("show"); }
+
+  // ---- render ----
+  const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+  function li(it){
+    const el = document.createElement("li");
+    el.className = "item" + (it.done ? " done" : "") + (lastAdded.has(it.id) ? " fresh" : "");
+    const b = document.createElement("button");
+    b.className = "check"; b.type = "button"; b.innerHTML = CHECK;
+    b.setAttribute("aria-label", (it.done ? "Desmarcar " : "Marcar ") + it.text);
+    b.onclick = () => toggle(it.id);
+    const s = document.createElement("span"); s.className = "txt"; s.textContent = it.text; s.onclick = () => toggle(it.id);
+    const d = document.createElement("button"); d.className = "del"; d.type = "button"; d.textContent = "×";
+    d.setAttribute("aria-label", "Eliminar " + it.text); d.onclick = () => remove(it.id);
+    el.append(b, s);
+    if (it.done && tab === "compras" && state.settings && state.settings.prices && it.pid){
+      const rec = (state.purchases||[]).find(p => p.id === it.pid);
+      const pr = document.createElement("input");
+      pr.className = "price"; pr.type = "text"; pr.inputMode = "numeric"; pr.placeholder = "$ precio";
+      pr.setAttribute("aria-label", "Precio de " + it.text);
+      if (rec && rec.price) pr.value = clp(rec.price);
+      pr.onfocus = () => { pr.value = rec && rec.price ? String(rec.price) : ""; };
+      pr.onchange = () => {
+        const v = parseInt(pr.value.replace(/\D/g,""), 10);
+        if (rec){ if (v > 0) rec.price = v; else delete rec.price; state.updatedAt = Date.now(); saveLocal(); }
+        pr.value = rec && rec.price ? clp(rec.price) : "";
+      };
+      pr.onkeydown = e => { if (e.key === "Enter") pr.blur(); };
+      el.append(pr);
+    }
+    el.append(d); return el;
+  }
+  const clp = n => "$" + Math.round(n).toLocaleString("es-CL");
+  function chip(h, onTap){
+    const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = "+ " + h.text;
+    c.onclick = onTap; return c;
+  }
+  function suggestions(){
+    const box = document.getElementById("sugg"); box.innerHTML = "";
+    const q = norm(document.getElementById("input").value.split(",").pop() || "");
+    if (tab !== "compras" || q.length < 1) return;
+    const inList = new Set(list().filter(i=>!i.done).map(i=>norm(i.text)));
+    Object.entries(state.history)
+      .filter(([k]) => k.includes(q) && k !== q && !inList.has(k))
+      .sort((a,b)=>b[1].c-a[1].c).slice(0,6)
+      .forEach(([,h]) => box.append(chip(h, () => {
+        const inp = document.getElementById("input");
+        const parts = inp.value.split(","); parts.pop();
+        const rest = parts.join(",").trim();
+        inp.value = ""; if (rest) addItems(rest); addItems(h.text, h.cat); suggestions(); inp.focus();
+      })));
+  }
+  function render(){
+    const reg = tab === "registro";
+    document.body.classList.toggle("reg", reg);
+    document.getElementById("listView").hidden = reg;
+    document.getElementById("regWrap").hidden = !reg;
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === tab));
+    document.getElementById("n-compras").textContent = state.lists.compras.filter(i=>!i.done).length || "";
+    document.getElementById("n-recordar").textContent = state.lists.recordar.filter(i=>!i.done).length || "";
+    if (reg){ document.getElementById("freq").hidden = true; document.getElementById("due").hidden = true;
+      document.getElementById("pricesOn").checked = !!(state.settings && state.settings.prices); renderMonth(); renderStats(); return; }
+    document.getElementById("cats").hidden = tab !== "compras";
+    document.querySelectorAll("#cats .cat").forEach(b => b.setAttribute("aria-pressed", b.dataset.cat === cat));
+    const arr = list();
+    const pend = arr.filter(i=>!i.done), done = arr.filter(i=>i.done);
+    const P = document.getElementById("pending"), D = document.getElementById("done");
+    P.innerHTML = ""; D.innerHTML = "";
+    const isC = tab === "compras";
+    const grouped = isC && pend.some(i=>(i.cat||"super")==="farmacia") && pend.some(i=>(i.cat||"super")==="super");
+    if (grouped){
+      ["super","farmacia"].forEach(c => {
+        const g = pend.filter(i=>(i.cat||"super")===c); if (!g.length) return;
+        const h = document.createElement("li"); h.className = "group"; h.textContent = CATS[c]; P.append(h);
+        g.forEach(i => P.append(li(i)));
+      });
+    } else pend.forEach(i => P.append(li(i)));
+    done.forEach(i => D.append(li(i)));
+    document.getElementById("title").textContent = isC ? "Lista de compras" : "Para recordar";
+    const d = new Date().toLocaleDateString("es-CL",{weekday:"long", day:"numeric", month:"long"});
+    const n = pend.length;
+    document.getElementById("date").textContent = cap(d) + " · " + (n === 0 ? "todo listo" : n + (isC ? (n===1?" por comprar":" por comprar") : (n===1?" pendiente":" pendientes")));
+    document.getElementById("doneLabel").textContent = isC ? "En el carro" : "Hecho";
+    document.getElementById("doneHead").hidden = done.length === 0;
+    document.getElementById("clearDone").textContent = isC ? "Terminar compra" : "Quitar hechos";
+
+    const em = document.getElementById("emptyMsg");
+    em.hidden = arr.length > 0;
+    em.textContent = isC ? "Anota aquí lo que te falta apenas te acuerdes. En el súper, toca cada producto al echarlo al carro."
+                         : "Cosas que no quieres olvidar hoy: pagar una cuenta, llamar a alguien, retirar un paquete…";
+
+    document.getElementById("input").placeholder = isC ? "Agregar producto…" : "Agregar recordatorio…";
+    document.getElementById("hint").textContent = isC ? "Separa con comas o dicta con el micrófono: pan, huevos y café" : "Separa con comas para agregar varios";
+    document.getElementById("n-compras").textContent = state.lists.compras.filter(i=>!i.done).length || "";
+    document.getElementById("n-recordar").textContent = state.lists.recordar.filter(i=>!i.done).length || "";
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === tab));
+
+    // ¿se te está acabando?
+    const DUE = document.getElementById("due"), DC = document.getElementById("dueChips");
+    DC.innerHTML = ""; let dueKeys = new Set();
+    if (isC){
+      const inListAll = new Set(pend.map(i=>norm(i.text)));
+      const DAY = 86400000, nowT = Date.now(), byK = {};
+      (state.purchases||[]).forEach(p => (byK[p.k] = byK[p.k] || []).push(p));
+      const dues = [];
+      Object.entries(byK).forEach(([k, arr]) => {
+        if (inListAll.has(k)) return;
+        const ds = arr.map(p=>p.d).sort((a,b)=>a-b);
+        const days = []; let prev = ds[0];
+        for (let i=1;i<ds.length;i++){ const g = (ds[i]-prev)/DAY; if (g >= 1){ days.push(g); prev = ds[i]; } }
+        if (!days.length) return;
+        const avg = days.reduce((a,b)=>a+b,0) / days.length;
+        const since = (nowT - ds[ds.length-1]) / DAY;
+        if (avg >= 2 && since >= avg * 0.9) dues.push({ k, text:arr[arr.length-1].text, cat:arr[arr.length-1].cat, since:Math.floor(since), avg:Math.round(avg), r:since/avg });
+      });
+      dues.sort((a,b)=>b.r-a.r).slice(0,6).forEach(x => {
+        dueKeys.add(x.k);
+        const c = chip(x, () => addItems(x.text, x.cat));
+        const sm = document.createElement("small"); sm.textContent = "hace " + x.since + " d · sueles c/" + x.avg + " d";
+        c.append(sm); DC.append(c);
+      });
+      DUE.hidden = dueKeys.size === 0;
+    } else DUE.hidden = true;
+
+    // frecuentes: lo que más compras y no está en la lista
+    const F = document.getElementById("freq"), FC = document.getElementById("freqChips");
+    FC.innerHTML = "";
+    if (isC){
+      const inList = new Set(pend.map(i=>norm(i.text)));
+      const top = Object.entries(state.history).filter(([k,h]) => h.c >= 2 && !inList.has(k) && !dueKeys.has(k))
+        .sort((a,b)=>b[1].c-a[1].c).slice(0,10);
+      top.forEach(([,h]) => FC.append(chip(h, () => addItems(h.text, h.cat))));
+      F.hidden = top.length === 0;
+    } else F.hidden = true;
+    suggestions();
+  }
+
+  // ---- registro ----
+  const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const mIdx = d => { const x = new Date(d); return x.getFullYear()*12 + x.getMonth(); };
+  function renderStats(){
+    const now = mIdx(Date.now());
+    const ps = state.purchases.filter(p => filter === "todo" || p.cat === filter);
+    const by = {};
+    ps.forEach(p => { (by[p.k] = by[p.k] || { text:p.text, cat:p.cat, ds:[] }).ds.push(p.d); });
+    const rows = Object.values(by).map(r => {
+      const first = Math.min(...r.ds.map(mIdx));
+      const months = now - first + 1;
+      const thisM = r.ds.filter(d => mIdx(d) === now).length;
+      const last6 = [5,4,3,2,1,0].map(o => r.ds.filter(d => mIdx(d) === now - o).length);
+      return { ...r, total:r.ds.length, avg:r.ds.length / months, thisM, last:Math.max(...r.ds), last6 };
+    }).sort((a,b) => b.avg - a.avg || b.total - a.total);
+
+    const S = document.getElementById("stats"); S.innerHTML = "";
+    const mesActual = new Date().toLocaleDateString("es-CL",{month:"long"});
+    document.getElementById("regSub").textContent = rows.length
+      ? ps.filter(p => mIdx(p.d) === now).length + " compras en " + mesActual : cap(mesActual);
+    document.getElementById("regEmpty").hidden = rows.length > 0;
+    document.querySelectorAll("#filters .cat").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === filter));
+    const fmt = n => (Math.round(n*10)/10).toString().replace(".", ",");
+    const labels = [5,4,3,2,1,0].map(o => MES[((now - o) % 12 + 12) % 12]);
+    rows.forEach(r => {
+      const el = document.createElement("li"); el.className = "stat";
+      const max = Math.max(1, ...r.last6);
+      const lastTxt = new Date(r.last).toLocaleDateString("es-CL",{day:"numeric", month:"short"});
+      const top = document.createElement("div"); top.className = "stat-top";
+      const name = document.createElement("span"); name.textContent = r.text;
+      const avg = document.createElement("b"); avg.textContent = fmt(r.avg) + "/mes";
+      top.append(name, avg);
+      const meta = document.createElement("div"); meta.className = "stat-meta";
+      meta.textContent = (filter === "todo" ? CATS[r.cat] + " · " : "") + "Este mes: " + r.thisM + " · Total: " + r.total + " · Última: " + lastTxt;
+      const sp = document.createElement("div"); sp.className = "spark"; sp.setAttribute("aria-hidden","true");
+      r.last6.forEach(v => { const i = document.createElement("i"); i.style.height = (v/max*100) + "%"; if (!v) i.className = "zero"; sp.append(i); });
+      const sl = document.createElement("div"); sl.className = "spark-l"; sl.setAttribute("aria-hidden","true");
+      labels.forEach(l => { const x = document.createElement("span"); x.textContent = l; sl.append(x); });
+      el.append(top, meta, sp, sl); S.append(el);
+    });
+  }
+
+  // ---- resumen mensual ----
+  function monthData(off){
+    const target = mIdx(Date.now()) - off;
+    const ps = (state.purchases||[]).filter(p => mIdx(p.d) === target);
+    const ns = (state.notesDone||[]).filter(p => mIdx(p.d) === target);
+    const by = {};
+    ps.forEach(p => { (by[p.k] = by[p.k] || { text:p.text, cat:p.cat, n:0 }).n++; });
+    const prods = Object.values(by).sort((a,b)=>b.n-a.n || a.text.localeCompare(b.text));
+    const y = Math.floor(target/12), m = target%12;
+    const name = new Date(y, m, 1).toLocaleDateString("es-CL",{month:"long", year:"numeric"});
+    return { target, ps, ns, prods, name:cap(name), shortName:new Date(y,m,1).toLocaleDateString("es-CL",{month:"long"}),
+      sup:ps.filter(p=>p.cat!=="farmacia").length, far:ps.filter(p=>p.cat==="farmacia").length };
+  }
+  function firstMonthOff(){
+    const all = [...(state.purchases||[]), ...(state.notesDone||[])];
+    if (!all.length) return 0;
+    return mIdx(Date.now()) - Math.min(...all.map(p=>mIdx(p.d)));
+  }
+  function renderMonth(){
+    const maxOff = firstMonthOff();
+    monthOff = Math.min(Math.max(monthOff,0), maxOff);
+    const m = monthData(monthOff), prev = monthData(monthOff+1);
+    document.getElementById("mTitle").textContent = m.name;
+    document.getElementById("mPrev").disabled = monthOff >= maxOff;
+    document.getElementById("mNext").disabled = monthOff === 0;
+    document.getElementById("kTotal").textContent = m.ps.length;
+    document.getElementById("kSuper").textContent = m.sup;
+    document.getElementById("kFarm").textContent = m.far;
+    const diff = m.ps.length - prev.ps.length;
+    document.getElementById("mCmp").textContent = (monthOff+1 > maxOff || !m.ps.length) ? "" :
+      diff === 0 ? "Igual que en " + prev.shortName : (diff > 0 ? "+" + diff : diff) + " compras vs " + prev.shortName;
+    const priced = m.ps.filter(p => p.price > 0);
+    const SP = document.getElementById("mSpend");
+    if (priced.length){
+      const tot = priced.reduce((a,p)=>a+p.price,0), ts = priced.filter(p=>p.cat!=="farmacia").reduce((a,p)=>a+p.price,0);
+      SP.innerHTML = ""; const b = document.createElement("b"); b.textContent = clp(tot);
+      SP.append("Gasto anotado: ", b, " · súper " + clp(ts) + " · farmacia " + clp(tot-ts));
+      SP.hidden = false;
+    } else SP.hidden = true;
+    const P = document.getElementById("mProds"), Nn = document.getElementById("mNotes");
+    P.innerHTML = ""; Nn.innerHTML = "";
+    m.prods.forEach(r => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = r.text + (r.cat === "farmacia" ? " (farmacia)" : "");
+      const b = document.createElement("span"); b.textContent = "×" + r.n;
+      li.append(a,b); P.append(li);
+    });
+    m.ns.forEach(r => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = r.text;
+      const b = document.createElement("span"); b.textContent = new Date(r.d).toLocaleDateString("es-CL",{day:"numeric", month:"short"});
+      li.append(a,b); Nn.append(li);
+    });
+    document.getElementById("mDistinct").textContent = m.prods.length ? m.prods.length + " distintos" : "";
+    document.getElementById("mNotesN").textContent = m.ns.length || "";
+    document.getElementById("mProdHead").hidden = !m.prods.length;
+    document.getElementById("mNotesHead").hidden = !m.ns.length;
+    const empty = !m.prods.length && !m.ns.length;
+    document.getElementById("mEmpty").hidden = !empty;
+    document.getElementById("mShare").hidden = empty;
+  }
+  function summaryText(){
+    const m = monthData(monthOff);
+    let t = "Melista · Resumen " + m.name + "\n";
+    t += m.ps.length + " compras (súper " + m.sup + ", farmacia " + m.far + ")\n";
+    const pz = m.ps.filter(p => p.price > 0); if (pz.length) t += "Gasto anotado: " + clp(pz.reduce((a,p)=>a+p.price,0)) + "\n";
+    if (m.prods.length){ t += "\nProductos:\n" + m.prods.map(r => "• " + r.text + " ×" + r.n).join("\n") + "\n"; }
+    if (m.ns.length){ t += "\nRecordatorios cumplidos:\n" + m.ns.map(r => "• " + r.text).join("\n") + "\n"; }
+    return t;
+  }
+  async function shareSummary(){
+    const text = summaryText();
+    try { if (navigator.share) { await navigator.share({ title:"Resumen Melista", text }); return; } } catch(e){ if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); showToast("Resumen copiado"); return; } catch(e){}
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.append(ta); ta.select();
+    try { document.execCommand("copy"); showToast("Resumen copiado"); } catch(e){ showToast("No se pudo copiar"); }
+    ta.remove();
+  }
+
+  // ---- eventos ----
+  document.getElementById("mPrev").onclick = () => { monthOff++; renderMonth(); };
+  document.getElementById("mNext").onclick = () => { monthOff--; renderMonth(); };
+  document.getElementById("mShare").onclick = shareSummary;
+  document.getElementById("ver").textContent = VERSION;
+
+  // respaldo
+  document.getElementById("bkOut").onclick = () => {
+    const blob = new Blob([JSON.stringify({ app:"melista", version:VERSION, exportedAt:new Date().toISOString(), data:state }, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "melista-respaldo-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    showToast("Respaldo descargado");
+  };
+  const bkFile = document.getElementById("bkFile");
+  document.getElementById("bkIn").onclick = () => bkFile.click();
+  bkFile.onchange = async () => {
+    const f = bkFile.files[0]; bkFile.value = ""; if (!f) return;
+    try {
+      const j = JSON.parse(await f.text());
+      const data = j && j.app === "melista" ? j.data : j;
+      if (!data || !data.lists) throw new Error("formato");
+      if (!confirm("¿Reemplazar tus datos actuales por este respaldo?")) return;
+      state = Object.assign(fresh(), data); commit(); showToast("Respaldo restaurado");
+    } catch(e){ showToast("Ese archivo no es un respaldo de Melista"); }
+  };
+  document.getElementById("pricesOn").onchange = e => { state.settings = Object.assign({}, state.settings, { prices:e.target.checked }); commit(); };
+
+  // dictado por voz
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const mic = document.getElementById("mic");
+  if (SR){
+    mic.hidden = false;
+    let rec = null;
+    mic.onclick = () => {
+      if (rec){ rec.stop(); return; }
+      try {
+        rec = new SR(); rec.lang = "es-CL"; rec.interimResults = false; rec.maxAlternatives = 1;
+        mic.classList.add("on"); showToast("Escuchando… di, por ejemplo: leche, pan y café");
+        rec.onresult = e => {
+          let t = Array.from(e.results).map(r => r[0].transcript).join(" ");
+          t = t.replace(/\s+(y|e|coma)\s+/gi, ",").replace(/\.$/,"");
+          addItems(t); hideToast();
+        };
+        rec.onerror = e => { showToast(e.error === "not-allowed" || e.error === "service-not-allowed" ? "Permite el micrófono para dictar" : "No te escuché, intenta de nuevo"); };
+        rec.onend = () => { mic.classList.remove("on"); rec = null; };
+        rec.start();
+      } catch(err){ mic.classList.remove("on"); rec = null; showToast("El dictado no está disponible aquí"); }
+    };
+  }
+  document.querySelectorAll("#cats .cat").forEach(b => b.onclick = () => { cat = b.dataset.cat; render(); });
+  document.querySelectorAll("#filters .cat").forEach(b => b.onclick = () => { filter = b.dataset.f; renderStats(); });
+  document.getElementById("form").addEventListener("submit", e => {
+    e.preventDefault();
+    const inp = document.getElementById("input");
+    addItems(inp.value); inp.value = ""; suggestions(); inp.focus();
+  });
+  document.getElementById("input").addEventListener("input", suggestions);
+  document.getElementById("clearDone").onclick = clearDone;
+  document.getElementById("undo").onclick = undo;
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { tab = t.dataset.tab; render(); });
+
+  // ---- siluetas de fondo ----
+  (function bgfx(){
+    const box = document.getElementById("bgfx"); if (!box) return;
+    const icons = [
+      "M9 2h6v3l2 3v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8l2-3z M7 12h10",
+      "M12 7c-2-2-7-1.5-7 4 0 5 3 10 5 10 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 5-5 5-10 0-5.5-5-6-7-4z M12 7c0-2 1-4 3-4",
+      "M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 2 7.5V19H6v-5.5A4 4 0 0 1 4 10z M9 10v4 M13 10v4",
+      "M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z M7 7l7 7",
+      "M4 4h16v16H4z M8 12l3 3 5-6",
+      "M5 8h14l-1 13H6z M9 8V6a3 3 0 0 1 6 0v2",
+      "M3 4h2l2.5 11h10L20 7H6.5 M9 20h.01 M17 20h.01",
+      "M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z",
+      "M4 6l2 2 3-3 M12 7h8 M4 13l2 2 3-3 M12 14h8 M5 20h3 M12 20h8"
+    ];
+    const colors = ["var(--btn)","var(--tq)","var(--mg)","#D9A93B","var(--ce)"];
+    const N = window.innerWidth < 600 ? 14 : 22;
+    for (let i = 0; i < N; i++){
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 24 24");
+      const path = document.createElementNS(NS, "path"); path.setAttribute("d", icons[i % icons.length]); svg.append(path);
+      const size = 26 + Math.random() * 30, dur = 28 + Math.random() * 30;
+      svg.style.width = svg.style.height = size + "px";
+      svg.style.left = (Math.random() * 100) + "%";
+      svg.style.color = colors[i % colors.length];
+      svg.style.opacity = (0.16 + Math.random() * 0.14).toFixed(2);
+      svg.style.animationDuration = dur + "s";
+      svg.style.animationDelay = (-Math.random() * dur) + "s";
+      const r = Math.round(Math.random() * 40 - 20);
+      svg.style.setProperty("--r0", r + "deg"); svg.style.setProperty("--r1", (r + (Math.random() < .5 ? -30 : 30)) + "deg");
+      box.append(svg);
+    }
+  })();
+
+  render();
+
+  if ("serviceWorker" in navigator && location.protocol === "https:"){
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
